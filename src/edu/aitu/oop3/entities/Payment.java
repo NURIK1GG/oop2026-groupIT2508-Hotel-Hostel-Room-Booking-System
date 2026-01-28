@@ -1,0 +1,24 @@
+package edu.aitu.oop3.entities;
+
+public class Payment {
+    private int id;
+    private int reservationId;
+    private double amount;
+    private String status; // e.g., "Paid", "Declined", "Pending"
+
+    public Payment(int reservationId, double amount, String status) {
+        this.reservationId = reservationId;
+        this.amount = amount;
+        this.status = status;
+    }
+
+    public int getReservationId() { return reservationId; }
+    public double getAmount() { return amount; }
+    public String getStatus() { return status; }
+
+    @Override
+    public String toString() {
+        return String.format("Payment [Reservation ID: %d, Amount: $%.2f, Status: %s]",
+                reservationId, amount, status);
+    }
+}
