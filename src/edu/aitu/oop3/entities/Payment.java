@@ -4,8 +4,7 @@ public class Payment {
     private int id;
     private int reservationId;
     private double amount;
-    private String status; // e.g., "Paid", "Declined", "Pending"
-
+    private String status;
     public Payment(int reservationId, double amount, String status) {
         this.reservationId = reservationId;
         this.amount = amount;

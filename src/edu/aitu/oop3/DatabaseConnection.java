@@ -8,6 +8,7 @@ public class DatabaseConnection {
     private static final String USER = "postgres.qybcpqnblziueklhpqyt";
     private static final String PASSWORD = "OOP2508IT@@"; // ← DATABASE PASSWORD
     private DatabaseConnection() {
+        // no instances
     }
     public static Connection getConnection() throws SQLException {
         return DriverManager.getConnection(URL, USER, PASSWORD);
