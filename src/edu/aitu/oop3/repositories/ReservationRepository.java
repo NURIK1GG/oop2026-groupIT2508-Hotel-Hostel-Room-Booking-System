@@ -2,13 +2,12 @@ package edu.aitu.oop3.repositories;
 
 import edu.aitu.oop3.db.IDB;
 import edu.aitu.oop3.entities.Reservation;
-import edu.aitu.oop3.repositories.interfaces.IReservationRepository;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ReservationRepository implements IReservationRepository {
+public class ReservationRepository implements IReservation {
     private final IDB db;
 
     public ReservationRepository(IDB db) {
@@ -20,13 +19,15 @@ public class ReservationRepository implements IReservationRepository {
         Connection con = null;
         try {
             con = db.getConnection();
-            String sql = "INSERT INTO reservations(guest_id, room_id, start_date, end_date) VALUES (?, ?, ?, ?)";
+            String sql = "INSERT INTO reservations(guest_id, room_id, check_in, check_out, total_price, status) VALUES (?, ?, ?, ?, ?, ?)";
             PreparedStatement st = con.prepareStatement(sql);
 
             st.setInt(1, reservation.getGuestId());
             st.setInt(2, reservation.getRoomId());
-            st.setDate(3, reservation.getStartDate());
-            st.setDate(4, reservation.getEndDate());
+            st.setDate(3, reservation.getCheckIn());
+            st.setDate(4, reservation.getCheckOut());
+            st.setDouble(5, reservation.getTotalPrice());
+            st.setString(6, reservation.getStatus());
 
             st.execute();
             return true;
@@ -34,42 +35,31 @@ public class ReservationRepository implements IReservationRepository {
             e.printStackTrace();
             return false;
         } finally {
-            try {
-                if (con != null) con.close();
-            } catch (SQLException throwables) {
-                throwables.printStackTrace();
-            }
+            try { if (con != null) con.close(); } catch (SQLException e) { e.printStackTrace(); }
         }
     }
 
     @Override
     public List<Reservation> getReservationsByGuestId(int guestId) {
+        return new ArrayList<>();
+    }
+
+    @Override
+    public boolean updateStatus(int id, String status) {
         Connection con = null;
-        List<Reservation> reservations = new ArrayList<>();
         try {
             con = db.getConnection();
-            String sql = "SELECT * FROM reservations WHERE guest_id = ?";
+            String sql = "UPDATE reservations SET status = ? WHERE id = ?";
             PreparedStatement st = con.prepareStatement(sql);
-            st.setInt(1, guestId);
-            ResultSet rs = st.executeQuery();
-
-            while (rs.next()) {
-                reservations.add(new Reservation(
-                        rs.getInt("guest_id"),
-                        rs.getInt("room_id"),
-                        rs.getDate("start_date"),
-                        rs.getDate("end_date")
-                ));
-            }
+            st.setString(1, status);
+            st.setInt(2, id);
+            st.executeUpdate();
+            return true;
         } catch (SQLException | ClassNotFoundException e) {
             e.printStackTrace();
+            return false;
         } finally {
-            try {
-                if (con != null) con.close();
-            } catch (SQLException throwables) {
-                throwables.printStackTrace();
-            }
+            try { if (con != null) con.close(); } catch (SQLException e) { e.printStackTrace(); }
         }
-        return reservations;
     }
 }

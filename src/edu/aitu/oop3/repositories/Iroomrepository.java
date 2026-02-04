@@ -1,0 +1,11 @@
+package edu.aitu.oop3.repositories;
+
+import edu.aitu.oop3.entities.Room;
+import java.sql.Date;
+import java.util.List;
+public interface Iroomrepository extends IGenericRepository<Room> {
+    boolean createRoom(Room room);
+    Room getRoomById(int id);
+    List<Room> getAllRooms();
+    List<Room> getAvailableRooms(Date checkIn, Date checkOut);
+}

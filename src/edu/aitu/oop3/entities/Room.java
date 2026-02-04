@@ -2,26 +2,39 @@ package edu.aitu.oop3.entities;
 
 public class Room {
     private int id;
-    private String roomNumber;
-    private String type;
-    private double pricePerNight;
+    private int number;
+    private String type; // 'Standard', 'Suite', 'Dorm'
+    private double price;
     private boolean isAvailable;
 
-    public Room(int id, String roomNumber, String type, double pricePerNight, boolean isAvailable) {
+    public Room() {}
+
+    public Room(int id, int number, String type, double price, boolean isAvailable) {
         this.id = id;
-        this.roomNumber = roomNumber;
+        this.number = number;
         this.type = type;
-        this.pricePerNight = pricePerNight;
+        this
+                .price = price;
         this.isAvailable = isAvailable;
     }
 
     public int getId() { return id; }
-    public String getRoomNumber() { return roomNumber; }
+    public void setId(int id) { this.id = id; }
+
+    public int getNumber() { return number; }
+    public void setNumber(int number) { this.number = number; }
+
     public String getType() { return type; }
-    public double getPricePerNight() { return pricePerNight; }
+    public void setType(String type) { this.type = type; }
+
+    public double getPrice() { return price; }
+    public void setPrice(double price) { this.price = price; }
+
+    public boolean isAvailable() { return isAvailable; }
+    public void setAvailable(boolean available) { isAvailable = available; }
 
     @Override
     public String toString() {
-        return String.format("Room #%s [%s] - $%.2f/night", roomNumber, type, pricePerNight);
+        return "Room{" + "id=" + id + ", number=" + number + ", type='" + type + '\'' + ", price=" + price + '}';
     }
 }
