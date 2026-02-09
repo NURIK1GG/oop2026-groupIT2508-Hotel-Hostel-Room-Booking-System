@@ -1,65 +1,42 @@
 package edu.aitu.oop3.repositories;
 
-import edu.aitu.oop3.db.IDB;
-import edu.aitu.oop3.entities.Reservation;
+import edu.aitu.oop3.db.PostgresDatabase;
 
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.time.LocalDate;
 
-public class ReservationRepository implements IReservation {
-    private final IDB db;
+public class ReservationRepository {
 
-    public ReservationRepository(IDB db) {
-        this.db = db;
-    }
+    public void save(int guestId, int roomId, LocalDate from, LocalDate to) {
+        String sql = """
+            INSERT INTO reservations(guest_id, room_id, date_from, date_to)
+            VALUES (?, ?, ?, ?)
+        """;
 
-    @Override
-    public boolean createReservation(Reservation reservation) {
-        Connection con = null;
-        try {
-            con = db.getConnection();
-            String sql = "INSERT INTO reservations(guest_id, room_id, check_in, check_out, total_price, status) VALUES (?, ?, ?, ?, ?, ?)";
-            PreparedStatement st = con.prepareStatement(sql);
+        try (Connection c = PostgresDatabase.getInstance().getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
 
-            st.setInt(1, reservation.getGuestId());
-            st.setInt(2, reservation.getRoomId());
-            st.setDate(3, reservation.getCheckIn());
-            st.setDate(4, reservation.getCheckOut());
-            st.setDouble(5, reservation.getTotalPrice());
-            st.setString(6, reservation.getStatus());
+            ps.setInt(1, guestId);
+            ps.setInt(2, roomId);
+            ps.setDate(3, Date.valueOf(from));
+            ps.setDate(4, Date.valueOf(to));
+            ps.executeUpdate();
 
-            st.execute();
-            return true;
-        } catch (SQLException | ClassNotFoundException e) {
-            e.printStackTrace();
-            return false;
-        } finally {
-            try { if (con != null) con.close(); } catch (SQLException e) { e.printStackTrace(); }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 
-    @Override
-    public List<Reservation> getReservationsByGuestId(int guestId) {
-        return new ArrayList<>();
-    }
+    public void delete(int id) {
+        String sql = "DELETE FROM reservations WHERE id = ?";
+        try (Connection c = PostgresDatabase.getInstance().getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
 
-    @Override
-    public boolean updateStatus(int id, String status) {
-        Connection con = null;
-        try {
-            con = db.getConnection();
-            String sql = "UPDATE reservations SET status = ? WHERE id = ?";
-            PreparedStatement st = con.prepareStatement(sql);
-            st.setString(1, status);
-            st.setInt(2, id);
-            st.executeUpdate();
-            return true;
-        } catch (SQLException | ClassNotFoundException e) {
-            e.printStackTrace();
-            return false;
-        } finally {
-            try { if (con != null) con.close(); } catch (SQLException e) { e.printStackTrace(); }
+            ps.setInt(1, id);
+            ps.executeUpdate();
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
         }
     }
 }

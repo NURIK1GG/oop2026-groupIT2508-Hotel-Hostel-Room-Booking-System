@@ -1,154 +1,93 @@
 package edu.aitu.oop3;
 
-import edu.aitu.oop3.db.IDB;
-import edu.aitu.oop3.db.PostgresDB;
-import edu.aitu.oop3.entities.Reservation;
-import edu.aitu.oop3.entities.Room;
-import edu.aitu.oop3.entities.RoomFactory;
+import edu.aitu.oop3.entities.*;
 import edu.aitu.oop3.repositories.*;
-import edu.aitu.oop3.services.BookingService;
 import edu.aitu.oop3.services.PaymentService;
-import edu.aitu.oop3.utils.PricingStrategy;
+import edu.aitu.oop3.services.ReservationService;
 
-import java.sql.Date;
-import java.util.List;
+import java.time.LocalDate;
 import java.util.Scanner;
 
 public class Main {
+
     public static void main(String[] args) {
-        IDB db = new PostgresDB();
-        Iroomrepository roomRepo = new RoomRepository(db);
-        IReservation resRepo = new ReservationRepository(db);
-        IPaymentRepository payRepo = new PaymentRepository(db);
 
-        BookingService service = new BookingService(roomRepo, resRepo);
-        PaymentService payService = new PaymentService(payRepo);
-
-        Scanner scanner = new Scanner(System.in);
-        System.out.println("Connecting to database...");
+        Scanner sc = new Scanner(System.in);
+        GuestRepository guestRepo = new GuestRepository();
+        RoomRepository roomRepo = new RoomRepository();
+        ReservationRepository resRepo = new ReservationRepository();
+        ReservationService reservationService = new ReservationService();
 
         while (true) {
-            System.out.println("1. List All Rooms");
-            System.out.println("2. Search Available Rooms");
-            System.out.println("3. Make Reservation");
-            System.out.println("4. Cancel Reservation");
-            System.out.println("0. Exit");
-            System.out.print("Select option: ");
+            System.out.println("""
+                1. Add Guest
+                2. Add Room
+                3. List Guests
+                4. List Rooms
+                5. Make Reservation with Payment
+                6. Delete Reservation
+                0. Exit
+                """);
 
-            int choice;
-            if (scanner.hasNextInt()) {
-                choice = scanner.nextInt();
-            } else {
-                scanner.next();
-                continue;
-            }
+            int choice = sc.nextInt();
+            sc.nextLine();
 
-            if (choice == 1) {
-                List<Room> rooms = service.getAllRooms();
-                if (rooms != null && !rooms.isEmpty()) {
-                    System.out.println("\nID | Number | Type     | Price  | Available");
-                    for (Room r : rooms) {
-                        System.out.printf("%-2d | %-6d | %-8s | %-6.2f | %-5s%n",
-                                r.getId(), r.getNumber(), r.getType(), r.getPrice(), r.isAvailable());
+            switch (choice) {
+                case 1 -> {
+                    System.out.print("Name: ");
+                    String name = sc.nextLine();
+                    System.out.print("Email: ");
+                    String email = sc.nextLine();
+                    guestRepo.save(new Guest(0, name, email));
+                }
+
+                case 2 -> {
+                    System.out.print("Room type: ");
+                    String type = sc.nextLine();
+                    System.out.print("Price: ");
+                    double price = sc.nextDouble();
+                    sc.nextLine();
+                    roomRepo.save(new Room(0, type, price));
+                }
+
+                case 3 -> guestRepo.findAll()
+                        .forEach(g -> System.out.println(g.getId() + " " + g.getName()));
+
+                case 4 -> roomRepo.findAll()
+                        .forEach(r -> System.out.println(r.getId() + " " + r.getType() + " " + r.getPrice()));
+
+                case 5 -> {
+                    try {
+                        System.out.print("Guest ID: ");
+                        int gid = sc.nextInt();
+                        System.out.print("Room ID: ");
+                        int rid = sc.nextInt();
+                        sc.nextLine();
+
+                        System.out.print("From (yyyy-mm-dd): ");
+                        LocalDate from = LocalDate.parse(sc.nextLine());
+
+                        System.out.print("To (yyyy-mm-dd): ");
+                        LocalDate to = LocalDate.parse(sc.nextLine());
+
+                        System.out.print("Payment Amount: ");
+                        double amount = sc.nextDouble();
+                        sc.nextLine();
+
+
+                    } catch (Exception e) {
+                        System.out.println("ERROR: " + e.getMessage());
                     }
-                } else {
-                    System.out.println("No rooms found.");
                 }
 
-            } else if (choice == 2) {
-                System.out.print("Enter Check-In (YYYY-MM-DD): ");
-                String in = scanner.next();
-                System.out.print("Enter Check-Out (YYYY-MM-DD): ");
-                String out = scanner.next();
-
-                List<Room> rooms = service.getAvailableRooms(in, out);
-                if (rooms != null && !rooms.isEmpty()) {
-                    System.out.println("\n--- Available Rooms ---");
-                    for (Room r : rooms) {
-                        System.out.printf("ID: %d, Type: %s, Price: %.2f%n", r.getId(), r.getType(), r.getPrice());
-                    }
-                } else {
-                    System.out.println("No rooms available for these dates.");
+                case 6 -> {
+                    System.out.print("Reservation ID: ");
+                    int id = sc.nextInt();
+                    sc.nextLine();
+                    resRepo.delete(id);
                 }
 
-            } else if (choice == 3) {
-                System.out.print("Enter Guest ID: ");
-                int guestId = scanner.nextInt();
-                System.out.print("Enter Room ID: ");
-                int roomId = scanner.nextInt();
-                System.out.print("Check-In (YYYY-MM-DD): ");
-                String checkIn = scanner.next();
-                System.out.print("Check-Out (YYYY-MM-DD): ");
-                String checkOut = scanner.next();
-
-                String result = service.makeReservation(guestId, roomId, checkIn, checkOut);
-                System.out.println("\n>>> " + result);
-
-                if (result.startsWith("Reservation created")) {
-                    payService.processPayment(100.0);
-                }
-
-            } else if (choice == 4) {
-                System.out.print("Enter Reservation ID to cancel: ");
-                int resId = scanner.nextInt();
-                String result = service.cancelReservation(resId);
-                System.out.println("\n>>> " + result);
-
-            } else if (choice == 5) {
-                System.out.print("Enter Room Type (Standard/Suite/Dorm): ");
-                String type = scanner.next();
-                System.out.print("Enter Room Number: ");
-                int number = scanner.nextInt();
-
-                Room newRoom = RoomFactory.createRoom(type, number);
-                boolean success = roomRepo.createRoom(newRoom);
-                if (success) {
-                    System.out.println("Room created: " + newRoom);
-                } else {
-                    System.out.println("Failed to create room.");
-                }
-
-            } else if (choice == 6) {
-
-                System.out.print("Enter max price: ");
-                double max = scanner.nextDouble();
-
-                List<Room> cheapRooms = service.getRoomsFilteredByPrice(max);
-                if (cheapRooms != null) {
-                    cheapRooms.forEach(r -> System.out.println(r));
-                }
-
-            } else if (choice == 7) {
-                System.out.println("--- Special Booking ---");
-                System.out.print("Guest ID: ");
-                int gId = scanner.nextInt();
-                System.out.print("Room ID: ");
-                int rId = scanner.nextInt();
-                System.out.print("Date (YYYY-MM-DD): ");
-                String dStr = scanner.next();
-                Date date = Date.valueOf(dStr);
-
-                Room room = roomRepo.getRoomById(rId);
-                if (room != null) {
-                    PricingStrategy pricing = PricingStrategy.getInstance();
-                    double finalPrice = pricing.calculatePrice(room.getPrice(), date.toLocalDate());
-                    System.out.println("Calculated Price (with seasonal/weekend adjustment): " + finalPrice);
-                    Reservation res = new Reservation.Builder()
-                            .setGuestId(gId)
-                            .setRoomId(rId)
-                            .setDates(date, date)
-                            .setTotalPrice(finalPrice)
-                            .setStatus("CONFIRMED")
-                            .build();
-
-                    boolean created = resRepo.createReservation(res);
-                    System.out.println("Reservation created via Builder: " + created);
-                } else {
-                    System.out.println("Room not found.");
-                }
-            } else if (choice == 0) {
-                System.out.println("Goodbye!");
-                break;
+                case 0 -> System.exit(0);
             }
         }
     }
